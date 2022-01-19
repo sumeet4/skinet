@@ -29,24 +29,30 @@ namespace API
             services.AddApplicationServices();
             services.AddSwaggerDocumentation();
             services.AddDbContext<StoreContext>(x => x.UseSqlite(_configuration.GetConnectionString("DefaultConnection")));
-
-            //add this after addcontorllers
-            services.Configure<ApiBehaviorOptions>(options =>
+            services.AddCors(opt =>
             {
-                options.InvalidModelStateResponseFactory = actionContext => 
+                opt.AddPolicy("CorsPolicy", policy =>
                 {
-                    var errors = actionContext.ModelState.Where(e => e.Value.Errors.Count>0)
-                        .SelectMany(x => x.Value.Errors)
-                        .Select(x => x.ErrorMessage).ToArray();
-                    
-                    var errorResponse = new ApiValidationErrorResponse
-                    {
-                        Errors =errors
-                    };
-                    return new BadRequestObjectResult(errorResponse);
-                };
-
+                    policy.AllowAnyHeader().AllowAnyMethod().WithOrigins("https://localhost:4200");
+                });
             });
+            //add this after addcontorllers
+            // services.Configure<ApiBehaviorOptions>(options =>
+            // {
+            //     options.InvalidModelStateResponseFactory = actionContext => 
+            //     {
+            //         var errors = actionContext.ModelState.Where(e => e.Value.Errors.Count>0)
+            //             .SelectMany(x => x.Value.Errors)
+            //             .Select(x => x.ErrorMessage).ToArray();
+                    
+            //         var errorResponse = new ApiValidationErrorResponse
+            //         {
+            //             Errors =errors
+            //         };
+            //         return new BadRequestObjectResult(errorResponse);
+            //     };
+
+            // });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -66,7 +72,7 @@ namespace API
 
             app.UseRouting();
             app.UseStaticFiles();
-
+            app.UseCors("CorsPolicy");
             app.UseAuthorization();
             app.UseSwaggerDocumentation();
             app.UseEndpoints(endpoints =>
